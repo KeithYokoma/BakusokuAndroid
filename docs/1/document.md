@@ -19,7 +19,7 @@ Not Installed なコンポーネントをひと通り入れておく。
 
 File > New Project... からプロジェクトを作るウィザードを立ち上げる。
 
-![alt text](https://github.com/KeithYokoma/BakusokuAndroid/raw/master/src/docs/1/new_project_wizard_1.png "Wizard 1")
+![Wizard 1](https://raw.github.com/KeithYokoma/BakusokuAndroid/master/docs/1/new_project_wizard_1.png "Wizard 1")
 
 項目名|意味
 -----|-----
@@ -33,7 +33,7 @@ Theme|アプリのスタイル
 
 Support Mode は、古い OS バージョン向けに使用したいバックポートコンポーネントを選択する。
 
-![alt text](https://github.com/KeithYokoma/BakusokuAndroid/raw/master/src/docs/1/new_project_wizard_2.png "Wizard 2")
+![Wizard 2](https://raw.github.com/KeithYokoma/BakusokuAndroid/master/docs/1/new_project_wizard_1.png "Wizard 2")
 
 アプリを起動直後、最初の画面を設定する。
 
