@@ -95,4 +95,45 @@ android {
 
 古い OS 向けにアプリを作る場合は、互換性を保つための工夫が必要になる点に注意する。
 
+スタイルを定義する xml
+は、`{ProjectRoot}/{Module}/src/main/res/values/styles.xml`,
+    `{ProjectRoot}/{Module}/src/main/res/values-v14/styles.xml`
+にある。
 
+テーマのベースは、support-v7-appcompat を使用する場合
+`@style/Theme.AppCompat.Light` とする。
+
+以下に例を示す。v-14 に切り分ける対象は、API Level が 11 ないし 14
+以降のもので、古い OS 向けには、`android:` ネームスペースをつけないでおく。
+
+`values/styles.xml`
+
+```xml
+<style name="Theme.Example" parent="@style/Theme.AppCompat.Light">
+  <item name="actionBarItemBackground">@drawable/selectable_background_example</item>
+  <item name="popupMenuStyle">@style/PopupMenu.Example</item>
+  <item name="dropDownListViewStyle">@style/DropDownListView.Example</item>
+  <item name="actionBarTabStyle">@style/ActionBarTabStyle.Example</item>
+  <item name="actionDropDownStyle">@style/DropDownNav.Example</item>
+  <item name="actionBarStyle">@style/ActionBar.Solid.Example</item>
+  <item name="actionModeBackground">@drawable/cab_background_top_example</item>
+  <item name="actionModeSplitBackground">@drawable/cab_background_bottom_example</item>
+  <item name="actionModeCloseButtonStyle">@style/ActionButton.CloseMode.Example</item>
+</style>
+```
+
+`values-v14/styles.xml`
+
+```xml
+<style name="Theme.Example" parent="@style/Theme.AppCompat.Light">
+  <item name="android:actionBarItemBackground">@drawable/selectable_background_example</item>
+  <item name="android:popupMenuStyle">@style/PopupMenu.Example</item>
+  <item name="android:dropDownListViewStyle">@style/DropDownListView.Example</item>
+  <item name="android:actionBarTabStyle">@style/ActionBarTabStyle.Example</item>
+  <item name="android:actionDropDownStyle">@style/DropDownNav.Example</item>
+  <item name="android:actionBarStyle">@style/ActionBar.Solid.Example</item>
+  <item name="android:actionModeBackground">@drawable/cab_background_top_example</item>
+  <item name="android:actionModeSplitBackground">@drawable/cab_background_bottom_example</item>
+  <item name="android:actionModeCloseButtonStyle">@style/ActionButton.CloseMode.Example</item>
+</style>
+```
