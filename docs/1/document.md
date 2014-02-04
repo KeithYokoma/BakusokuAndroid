@@ -39,6 +39,13 @@ Support Mode は、古い OS バージョン向けに使用したいバックポ
 
 Navigation Type は、横スワイプで切り替えるか、スピナーから選択式で切り替えるか、ドロワーメニューで切り替えるかを選択する。
 
+プロジェクトを作り終えたら、シェルで以下のコマンドを実行する
+
+```shell
+$ cd {ProjectRoot}
+$ chmod +x gradlew
+```
+
 ## 必要なライブラリを揃える
 
 `{ProjectRoot}/{Module}/build.gradle` を編集して、ライブラリを揃える。
