@@ -56,7 +56,7 @@ buildscript {
         // ここに、ライブラリが公開されているリポジトリの URL を書く。
         // デフォルトでは、maven central が登録されている。GitHub などに独自にリポジトリがある場合は、別途その URL を書く。
         mavenCentral()
-        maven 'https://raw.github.com/nohana/Amalgam/master/amalgam/repository/'
+        maven { url 'https://raw.github.com/nohana/Amalgam/master/amalgam/repository/' }
     }
 }
 
