@@ -137,3 +137,56 @@ android {
   <item name="android:actionModeCloseButtonStyle">@style/ActionButton.CloseMode.Example</item>
 </style>
 ```
+
+## ステージング用と本番用とを切り替える
+
+### ビルドスクリプト
+
+Gradle のスクリプトで、ステージング用、本番用などの切り替えができる。
+バックエンドを手軽に切り替えることができ、また、apk もそれぞれで作成できるので、DeployGate などに配信する際も便利に使える。
+
+```Groovy
+android {
+    // ... {snip} ...
+
+    // 用途の宣言
+    productFlavors {
+        staging {
+            proguardFile 'proguard-rules.txt'
+            packageName "jp.yokomark.sample.staging"
+        }
+        production {
+            proguardFile 'proguard-rules.txt'
+            packageName "jp.yokomark.sample"
+        }
+    }
+}
+```
+
+これで、stagingDebug, stagingRelease, productionDebug, productionRelease の 4 種類のビルドが可能となる。
+それぞれ、ステージング向きデバッグ用、ステージング向きリリース用、プロダクション向きデバッグ用、プロダクション向きリリース用の apk が作られる。
+
+パッケージ名を変えることができるので、ステージング向きとプロダクション向きのそれぞれのアプリを同じ端末にインストールすることが出来る。
+
+### ディレクトリ構成
+
+ステージング向きにした時には、ステージング向き専用のコード、プロダクション向きにした時は、プロダクション向き専用のコードに切り替えることが出来る。
+
+`{ProjectRoot}/{Module}/src`以下に、productFlavors に宣言したフレーバーと同じ名前のディレクトリを作成し、その下に、java のソースコードやリソースを配置することで、それぞれに専用のコード・リソースを配置することが出来る。
+
+- ステージング向き
+  `{ProjectRoot}/{Module}/src/staging/java`
+  `{ProjectRoot}/{Module}/src/staging/res`
+- プロダクション向き
+  `{ProjectRoot}/{Module}/src/production/java`
+  `{ProjectRoot}/{Module}/src/production/res`
+
+これらより下のディレクトリ構成は通常のものと同じでよい。
+
+### AndroidStudio でビルドする
+
+左端の Build Variants から、目的のフレーバーを選択する。
+
+![Build Variants](https://raw.github.com/KeithYokoma/BakusokuAndroid/master/docs/2/build_variants.png "Build Variants")
+
+選択したら、Run で自動的にビルドが開始される。

@@ -16,6 +16,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    productFlavors {
+        staging {
+            packageName "jp.yokomark.sample2.staging"
+        }
+        production {
+            packageName "jp.yokomark.sample2"
+        }
+    }
 }
 
 dependencies {
