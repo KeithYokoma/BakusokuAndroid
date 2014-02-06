@@ -96,4 +96,37 @@ Tasks に、ワークスペースのクリーンアップと一連のビルド�
 
 ## DeployGate で配信する
 
+Gradle 用のプラグインがあるので、これを利用してアップロードする。
 
+```Groovy
+buildscript {
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.8.+'
+        classpath 'com.deploygate:gradle:0.4'
+    }
+}
+
+apply plugin: 'android'
+apply plugin: 'deploygate'
+
+deploygate {
+    userName = "my_user_name"
+    token = "deploygate api token"
+
+    apks {
+        Release {
+            sourceFile = file("build/apk/app-production-release.apk")
+            message = "Release build of app"
+        }
+
+        Debug {
+            sourceFile = file("build/apk/app-staging-release.apk")
+            message = "Staging build of app"
+        }
+    }
+}
+```
+
+`./gradlew tasks` を実行すると、deploygate 用のタスクが追加されている。
+
+`./gradlew build uploadDeployGate` とすることで、ビルド成果物を deploygate にアップロードすることが出来る。
