@@ -56,16 +56,16 @@ android {
         debug {
             // 開発時の署名設定。共通の開発用鍵を作っておくことで、ことなる開発機から同じ端末にインストールしようとしたときにも、署名によるコンフリクトが起こらずに済むので設定しておくべき
             storeFile file("conf/debug.keystore")
-            storePassword android
-            keyAlias androiddebugkey
-            keyPassword android
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
         }
         release {
             // リリース用の署名設定。開発用の署名ファイルはリポジトリに入れても良いが、リリース用はリポジトリに入れないように工夫する。
             storeFile file("conf/release.keystore")
-            storePassword foobar
-            keyAlias baz
-            keyPassword foobar
+            storePassword "foobar"
+            keyAlias "baz"
+            keyPassword "foobar"
         }
     }
 
