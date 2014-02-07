@@ -129,6 +129,15 @@ public class MyModuleTest {
 
 ## 設計
 
+参考：http://qiita.com/KeithYokoma/items/f19a732aad3beff9387c
+
+アプリの設計の基本は MVC で、Activity や Fragment は Controller に相当するものと考える。
+Service も基本的には、画面を持たない Controller と考え、適宜 Model にアクセスし処理を継続する。
+
+この他、テストしやすさや、モジュール化などを考慮すると、Model はさらに複数のレイヤに細分化される。
+
+Controller が直接に参照するレイヤが、所謂 Model の最たるものになるが、Controller からみてその向こう側には、非同期処理を実行する Loader が居たり、ネットワークアクセスや DB、ディスクキャッシュへアクセスする client 群が居たりする。
+その意味では、キャッシュの仕組みそのものを管理する Manager や、ContentProvider のような DB の管理をするものは、Model の中でも最もデータよりの、DataSouce に位置づけるべきものなので、これらのデータにアクセスする Accessor のレイヤを別途作っておくことが望ましい。
 
 
 ## セキュリティ
