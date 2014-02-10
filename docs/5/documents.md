@@ -198,4 +198,32 @@ public class SampleEntry {
 }
 ```
 
+## WebView
 
+WebView の使用にあたって注意すべきことを述べる。
+
+- 参考リンク
+  - https://ierae.co.jp/uploads/webview.pdf
+
+### POST データ
+
+WebView からブラウザに POST データを引き継ぐ事ができないことに注意する。
+特に、課金決済処理の実装を WebView で行うと引っかかりやすい。
+
+### JavaScriptInterface
+
+信頼のおけるドメイン以外で、JavaScriptInterface を有効にしない。
+あるいは、信頼のおけるドメイン以外は WebView で表示しないようにする。
+
+Android 4.2 以降、`@JavaScriptInterface` アノテーションのついていない JavaScriptInterface メソッドは実行されないことにも留意する。
+
+### URL
+
+URL スキームを http ないし https に限定すること。
+file スキームを許可するとセキュアデータにアクセス可能にしてしまう為、適切にハンドリングする。
+
+やむを得ない場合は、ディレクトリトラバーサル攻撃を防ぐ実装をすること。
+
+## UI
+
+## DalvikVM
