@@ -175,6 +175,10 @@ DataSource は、単なるネットワーク I/O のみならず、データベ�
 コールバックインタフェースの呼び出しと受け取りの部分を、EventBus を介して行うことにより、各レイヤ間の強参照がなくなる。このため、EventBus を介してやりとりされる Event オブジェクトを変更するだけでインタフェースの交換が可能となる。
 ただし、この場合、インタフェースによる実装の強制がないため、抜け漏れに注意しなければならない。
 
+- 参考リンク
+  - http://d.hatena.ne.jp/pokarim/20101226
+  - http://www.infoq.com/jp/news/2013/09/reactive-programming-emerging
+
 ### Activity と Fragment
 
 おおまかに、タブレットとハンドセット端末で、機能的にはほぼ同じ機能を提供することを前提としている場合、Fragment を用いた実装をすることが望ましい。
@@ -186,6 +190,9 @@ DataSource は、単なるネットワーク I/O のみならず、データベ�
 ## セキュリティ
 
 ここでは、アプリの実装をする際に考慮すべきセキュリティ事項について解説する。
+
+- 参考リンク
+  - http://www.jssec.org/dl/android_securecoding.pdf
 
 ### IntentFilter
 
