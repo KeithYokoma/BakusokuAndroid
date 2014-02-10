@@ -131,13 +131,85 @@ public class MyModuleTest {
 
 参考：http://qiita.com/KeithYokoma/items/f19a732aad3beff9387c
 
-アプリの設計の基本は MVC で、Activity や Fragment は Controller に相当するものと考える。
-Service も基本的には、画面を持たない Controller と考え、適宜 Model にアクセスし処理を継続する。
+### MVC
 
-この他、テストしやすさや、モジュール化などを考慮すると、Model はさらに複数のレイヤに細分化される。
+![MVC Component](https://raw.github.com/KeithYokoma/BakusokuAndroid/master/docs/4/architecture.001.png "MVC Component")
 
-Controller が直接に参照するレイヤが、所謂 Model の最たるものになるが、Controller からみてその向こう側には、非同期処理を実行する Loader が居たり、ネットワークアクセスや DB、ディスクキャッシュへアクセスする client 群が居たりする。
-その意味では、キャッシュの仕組みそのものを管理する Manager や、ContentProvider のような DB の管理をするものは、Model の中でも最もデータよりの、DataSouce に位置づけるべきものなので、これらのデータにアクセスする Accessor のレイヤを別途作っておくことが望ましい。
+Android では、Controller のための基本フレームワークとして `Activity` や `Fragment` を提供している。また、View は `TextView`、`ImageView` などに代表されるような `View` のコンポーネントである。
+Model については、特にデータソースに近いレイヤのフレームワークとして、`ContentProvider` や `SharedPreferences` などが提供されている。この他、I/O を行うスレッドと UI Thread とのブリッジの役目を果たす Loader という仕組みも用意されている。
+ただし、この他のビジネスロジックについては自分たちで実装する範疇となる。
 
+### 設計の戦略
+
+MVC では、Controller や Model が太りやすく、責務が集中しがちになる。
+リファクタリングや設計の戦略として、基本的には、Controller の処理は他のクラスへ委譲することが一般的で、委譲の戦略としては、View のイベントハンドリングについては、id とイベントハンドラを対応付けたマップを保持しておき、適宜 View のイベントに応じて適切なハンドラを呼び出すような実装が考えられる。
+一方、Model は、その責務に含まれる範囲が幅広いため、Model の中でもレイヤわけを細かくしておく必要がある。
+
+以下、Model のレイヤ分離の参考例を示す。
+
+![Model Layer](https://raw.github.com/KeithYokoma/BakusokuAndroid/master/docs/4/architecture.002.png "Model Layer")
+
+Loader によって非同期処理インタフェースを作る。Loader は仕組み上キャッシュのような仕組みを持つことができるが、メモリにデータを載せておくだけの役割しか持たないようにする。
+Model は UI Thread で行われるビジネスロジックを記述し、Loader よりレイヤの低い Client や DataSource は、別スレッドで非同期に実行されるビジネスロジックを記述する。
+Client はアクセサではあるが、データソースが複数に渡る場合もある。
+DataSource は、単なるネットワーク I/O のみならず、データベースへのアクセスも含まれる。また、キャッシュ（特にディスクキャッシュ）もデータソースとして捉え、このレイヤにアクセスする Client で適宜ハンドリングを行う。
+
+![Model Layer 2](https://raw.github.com/KeithYokoma/BakusokuAndroid/master/docs/4/architecture.003.png "Model Layer 2")
+
+### 各レイヤ間のコミュニケーション
+
+方法論としては 2 つのやり方があり、1 つには、インタフェースを宣言して、結果を受け取る側がそのインタフェースを実装、また、依頼を受ける側に適宜そのインタフェースを実装したクラスのインスタンスのライフサイクル管理を委譲する。
+もう 1 つには、EventBus を用いて間接的に各種のオペレーションフローを作る方法もある。
+
+もっとも原始的なやり方は 1 で、以下のような図に示される関係をインタフェースに落としこんで実装する。
+
+![MVC Communication Interface](https://raw.github.com/KeithYokoma/BakusokuAndroid/master/docs/4/architecture.004.png "MVC Communication Interface")
+
+この方法の場合、インタフェースがはっきりと宣言され、実装されるので、手間はかかるが堅牢な設計と実装になる。
+一方、インタフェースを変更するコストは高い。また、インタフェースは主にコールバックとして用いられる為、コールバックのライフサイクルを考慮する必要性と、コールバックインタフェースの乱立によるコールバック地獄や、誤った継承をしたときのインタフェース汚染などの危険性がある。
+
+インタフェースを宣言した場合の欠点を解消する方法が、もう一つの EventBus を用いた設計である。
+
+![EventBus](https://raw.github.com/KeithYokoma/BakusokuAndroid/master/docs/4/architecture.005.png "EventBus")
+
+コールバックインタフェースの呼び出しと受け取りの部分を、EventBus を介して行うことにより、各レイヤ間の強参照がなくなる。このため、EventBus を介してやりとりされる Event オブジェクトを変更するだけでインタフェースの交換が可能となる。
+ただし、この場合、インタフェースによる実装の強制がないため、抜け漏れに注意しなければならない。
+
+### Activity と Fragment
+
+おおまかに、タブレットとハンドセット端末で、機能的にはほぼ同じ機能を提供することを前提としている場合、Fragment を用いた実装をすることが望ましい。
+
+例えば、何かしらのコンテンツの一覧画面から、その一覧のなかの詳細を見る画面へ遷移するような場面の場合、ハンドセット端末では、一覧画面と詳細画面を別々の画面として遷移させたいが、タブレットでは、左端に一覧を表示しておき、適宜その選択によって詳細画面を右側に表示し、切り替えるような場合に、Fragment が活躍する。
+
+この場合、一覧画面も詳細画面も、Activity はほとんど責務を持たず、Fragment がモデルとのやりとりをして表示までを行うことになる。
 
 ## セキュリティ
+
+ここでは、アプリの実装をする際に考慮すべきセキュリティ事項について解説する。
+
+### IntentFilter
+
+IntentFilter とは、Intent を受け取ることの出来るコンポーネントが、具体的にどの種類の Intent なら受け付けられるかを表すもの。
+Android では、他のアプリへ Intent を飛ばすこともでき、この時 IntentFilter で宣言した種類にマッチすると、Intent が外部から受け取ることができるようになる。
+
+基本的に、IntentFilter を宣言すると、そのコンポーネントはデフォルトで外部公開状態となり、IntentFilter の条件にマッチする限りすべての Intent を受け取ることになる。
+実装にもよるが、外部からの Intent を受け取って、何らかのネットワークアクセスを行ったりするような場合、そのコンポーネントに何千回と Intent を送りつけられてしまうと、その分だけネットワークアクセスが発生し、アプリを踏み台にした攻撃が可能になってしまう。
+
+よって、IntentFilter を宣言したコンポーネントの公開状態には気をつけなければならない。
+アプリ内でしかやりとりしない Intent であれば、外部公開をしないよう設定（`android:exported="false"`にする）か、パーミッションを定義して、許可のあるアプリからの Intent のみ受け取るようにする。
+
+### Broadcast Intent
+
+また、自分のアプリが送信する Intent にも注意する。
+Intent の中身、特に Extra にセンシティブな情報を含む場合で、かつその Intent を broadcast する場合、特になにもしないと、すべてのアプリでその Intent を受け取れるようになる。
+Broadcast された Intent を解析され、IntentFilter にマッチする条件が判明すれば、Extra が引きぬくことができるようになる。
+
+基本的には、特に事情がない限り、Broadcast は `LocalBroadcastManager` を介して行うべき。それが不可能な場合は、パーミッションを定義すること。
+
+### ストレージ
+
+SharedPreferences を始め、ディスクにファイルを書き込む API には、ファイルの権限設定を引数に渡すものがある。
+公式にも、そのようなすべての API では、自分のアプリ以外からの書き込み・読み込みを禁止する権限にしておくことが推奨されているが、一部権限設定ができない API がある。
+
+SD カードなどの External Storage は、権限設定のできないストレージであり、すべてのアプリが読み込み・書き込みの権限を持つことになる。
+このため、機密性の高いデータは External Storage に保存してはならない。
