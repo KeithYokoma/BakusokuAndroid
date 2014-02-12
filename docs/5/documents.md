@@ -228,6 +228,26 @@ public class SampleEntry {
 }
 ```
 
+## コレクションフレームワーク
+
+List など、Iterator を用いたデータ構造へのアクセスが可能なコレクションフレームワークでは、以下の点に注意する。
+
+### Iterator によるループ内でのコレクション操作
+
+特に、Iterator でのコレクションの走査中に、直接コレクションからオブジェクトを削除するような操作はしない。
+この操作を行うと、その時点で ConcurrentModificationException が投げられる。
+
+### 複数スレッドからのコレクション操作
+
+複数スレッドからアクセスされる可能性のあるコレクションは、以下のようにして直接の操作を同期化する。
+
+```Java
+List<String> list = Collections.synchronizedList(new ArrayList<String>());
+```
+
+ただし、このコレクションに対する Iterator によるアクセスは同期化されないので、Iterator を用いる場合は、そのブロックを synchronized する必要がある。
+こちらも、Iterator によるアクセスを同期化していない時に別々のスレッドから個別に操作を行うと ConcurrentModificationException が投げられる。
+
 ## WebView
 
 WebView の使用にあたって注意すべきことを述べる。
