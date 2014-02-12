@@ -88,6 +88,59 @@ public class SomeEntry {
 }
 ```
 
+## CountDownLatch
+
+同期化支援の為の仕組みですが、テスト時にも有用。
+
+モックのクラスのメソッドが呼ばれるまでテストケースを待機するようにする使い方をする。
+
+```Java
+public class TestTarget {
+    private MockTarget mMock;
+
+    public TestTarget() {
+        mMock = new MockTarget();
+    }
+
+    public void doHoge() {
+        mMock.hoge();
+    }
+
+    public void setMockTarget(MockTarget target) {
+        mMock = target;
+    }
+}
+
+public class MockTarget {
+    public void hoge() {
+        // something
+    }
+}
+
+public class Test extends AndroidTestCase {
+    private TestTarget mTarget;
+    private CountDownLatch mLatch;
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        mLatch = new CountDownLatch(1);
+        mTarget = new TestTarget();
+        mTarget.setMockTarget(new MockTarget() {
+            @Override
+            public void hoge() {
+                mLatch.countDown();
+            }
+        });
+    }
+
+    public void testDoHoge() throws Exception {
+        mTarget.doHoge();
+        mLatch.await();
+    }
+}
+```
+
 ## 例外
 
 - 参考リンク
