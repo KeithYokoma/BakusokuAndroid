@@ -147,6 +147,36 @@ try {
 }
 ```
 
+## 参照の強さと内部クラス
+
+参照には種類があり、最も単純に、メンバ変数に参照を持つものを強参照という。この参照は、あるオブジェクトが別のオブジェクトを参照するとき、あるオブジェクトへの参照があるかぎり、そのオブジェクトが持つ別のオブジェクトへの参照は GC されない。
+
+この時、Activity に、Activity のライフサイクルと異なるオブジェクトへの参照をもち、そのオブジェクトにその Activity への参照を与えてしまうと、循環参照となり GC されずメモリリークとなる。
+この状況がよく起こる場面として、非 static な内部クラス（インナークラス）に Activity の強参照を持つような実装が挙げられる。非 static な内部クラスは、暗黙のうちに、外側のクラス（アウタークラス）への参照を持つ為、ライフサイクルの管理を怠るとすぐにリークしてしまう。
+
+Activity への参照、ないしは、Context への参照を持ち、ライフサイクルがそれらと異なるものを実装する場合、Activity や Context への参照は、強参照でもつべきではない。代わりに、弱い参照（弱参照、WeakReference）を使う。
+弱い参照は、たとえ参照が残っていたとしても、GC の対象として回収される。
+
+使い方は以下のとおり。
+
+```Java
+public class SomeObject {
+    private WeakReference<Activity> mActivity;
+
+    public SomeObject(Activity activity) {
+        // Activity 型の弱参照オブジェクトを作る
+        mActivity = new WeakReference<Activity>(activity);
+    }
+
+    public void doSomething() {
+        if (!mActivity.isAlive()) { // 弱参照オブジェクトの生存確認
+            return;
+        }
+        // do something using activity
+    }
+}
+```
+
 ## equals() と hashCode()
 
 - 参考リンク
