@@ -81,6 +81,47 @@ public class SomeEntry {
 
 ## 並列処理
 
+### synchronized
+
+synchronized の付与されたブロックは、同時に 1 つのスレッドしか実行できないようにする、排他制御の仕組み。
+修飾子としても、ブロックとしても使うことができる。
+
+```Java
+public class Something {
+    public synchronized void hoge() {
+        // 1
+    }
+
+    public void fuga() {
+        synchronized(this) {
+            // 2
+        }
+    }
+
+    public static synchronized void foo() {
+        // 3
+    }
+}
+```
+
+1 と 2 はロックの取り方がメソッド全体に渡るため、振る舞いとしては同じになる。ただし中間コードは少し異なる。
+ロックに使われるオブジェクトは、そのクラスのインスタンスとなるため、異なるスレッドで異なるインスタンスに対し同じメソッドを呼ぶ限りであれば、インスタンス間でロックの競合はない。
+
+3 は`Class`クラスに対するロックをかける。`Class`クラスのインスタンスはメモリ内に唯一に存在するものになるので、必ず排他制御となる。
+
+以下の例のように、synchronized なメソッドをオーバライドしても、小クラスのメソッドは synchronized とはならない。
+
+```Java
+public class Parent {
+    public synchronized void hoge() {}
+}
+
+public class Child {
+    @Override
+    public void hoge() {}
+}
+```
+
 ### ThreadPoolExecutor
 
 Android を始めとして、イベント駆動型の UI プログラミングでは、メインスレッドで UI のイベントハンドリングを行うループが走り、ネットワークやディスクへの I/O などのスレッドをブロックする処理は、ワーカスレッドへ依頼するモデルが一般的。
