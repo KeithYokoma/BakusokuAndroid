@@ -5,15 +5,6 @@ Java の各種のパラダイムやライブラリについて、WebView、UI、
 - 参考
   - http://amzn.to/1biskqi
 
-## ThreadPoolExecutor
-
-Android を始めとして、イベント駆動型の UI プログラミングでは、メインスレッドで UI のイベントハンドリングを行うループが走り、ネットワークやディスクへの I/O などのスレッドをブロックする処理は、ワーカスレッドへ依頼するモデルが一般的。
-Android においては、AsyncTask や AsyncTaskLoader、IntentService などのコンポーネントがそれを抽象化している。
-
-AsyncTask や AsyncTaskLoader では、内部で Thread を立ち上げ、その Thread での処理が終わり次第 MainThread に対してコールバックを返すような設計になっている。
-一方で、Thread は、Thread#start() に関してパフォーマンスの問題があり、Thread のインスタンスを都度新規に作っていると、その分だけパフォーマンスが劣化する。
-よって、AsyncTask や AsyncTaskLoader では、ThreadPoolExecutor という仕組みを用いて、Thread インスタンスを予めプールしておき、要求に応じてインスタンスを使いまわす実装がされている。
-
 ## 防御的コピー
 
 ミュータブルなオブジェクト（オブジェクト生成後にその状態を変更可能なオブジェクト, 例えば Date や ArrayList など）をフィールドに持つクラスの初期化時、参照渡しで渡された引数をフィールドにセットすると、初期化処理を呼び出した側での参照先のオブジェクトの変更が、参照渡しで渡したフィールドにも影響を与えてしまう。
@@ -88,7 +79,20 @@ public class SomeEntry {
 }
 ```
 
-## CountDownLatch
+## 並列処理
+
+### ThreadPoolExecutor
+
+Android を始めとして、イベント駆動型の UI プログラミングでは、メインスレッドで UI のイベントハンドリングを行うループが走り、ネットワークやディスクへの I/O などのスレッドをブロックする処理は、ワーカスレッドへ依頼するモデルが一般的。
+Android においては、AsyncTask や AsyncTaskLoader、IntentService などのコンポーネントがそれを抽象化している。
+
+AsyncTask や AsyncTaskLoader では、内部で Thread を立ち上げ、その Thread での処理が終わり次第 MainThread に対してコールバックを返すような設計になっている。
+一方で、Thread は、Thread#start() に関してパフォーマンスの問題があり、Thread のインスタンスを都度新規に作っていると、その分だけパフォーマンスが劣化する。
+よって、AsyncTask や AsyncTaskLoader では、ThreadPoolExecutor という仕組みを用いて、Thread インスタンスを予めプールしておき、要求に応じてインスタンスを使いまわす実装がされている。
+
+### CountDownLatch
+
+他のスレッドの処理によってラッチのカウントが 0 になるまでスレッドを止めるための仕組み。
 
 同期化支援の為の仕組みですが、テスト時にも有用。
 
@@ -140,6 +144,99 @@ public class Test extends AndroidTestCase {
     }
 }
 ```
+
+### Double Checked Locking
+
+大くの場合、Java のプログラムで多くの実行時間を占める処理は、新しいインスタンスの生成になる。
+特に、コンストラクタでは様々な変数の初期化処理が走り、メモリ確保のための動作をすることになるため、数が多ければ多いほど処理が重たくなる。
+
+```Java
+public class Something {
+    private Map<String, String> someData;
+
+    public Something() {
+        someData = new HashMap<String, String>();
+    }
+
+    public void add(String key, String value) {
+        someData.put(key, value);
+    }
+}
+```
+
+上記のようなクラスを考えた場合、`someData` は、`Something#add(String, String)` が呼ばれるまでの間は、なんのデータも保持していない為無駄なメモリを食っていることになる。
+そこで、`someData` が必要になるまで初期化を遅延させるイディオムを用いることで、Something の初期化処理の速度を向上させる。
+
+```Java
+public class Something {
+    private Map<String, String> someData;
+
+    public Something() {}
+
+    public void add(String key, String value) {
+        if (someData == null) {
+            someData = new HashMap<String, String>();
+        }
+        someData.put(key, value);
+    }
+}
+```
+
+この実装は、Something インスタンスをシングルスレッドで操作する場合において適切に動作する。  
+もしこの Something インスタンスを複数スレッドから操作する場合、レースコンディションが発生し得る。
+
+修正のポイントは 2 つ。
+1 つには、データ構造をスレッドセーフにすること。
+2 つには、フィールドをスレッドセーフにすること。
+
+データ構造をスレッドセーフにするには、以下のように`CuncurrentHashMap<K, V>`を使う。
+
+```Java
+public class Something {
+    private Map<String, String> someData;
+
+    public Something() {}
+
+    public void add(String key, String value) {
+        if (someData == null) {
+            someData = new ConcurrentHashMap<String, String>();
+        }
+        someData.put(key, value);
+    }
+}
+```
+
+しかし、これだけでは、ConcurrentHashMap のデータの操作がスレッドセーフになっただけで、someData フィールドへの操作はスレッドセーフではない。
+そのため、複数のスレッドが同時にこのフィールドへアクセスすると、あるスレッドの操作が別のスレッドによって打ち消されてしまう可能性がある。
+
+このため、以下のように修正する。
+
+```Java
+public class Something {
+    private volatile Map<String, String> someData;
+
+    public Something() {}
+
+    public void add(String key, String value) {
+        if (someData == null) {
+            synchronized (this) {
+                if (someData == null) {
+                    someData = new ConcurrentHashMap<String, String>();
+                }
+            }
+        }
+        someData.put(key, value);
+    }
+}
+
+```
+
+`volatile` 修飾子をフィールドにつけることで、コンパイラによる最適化を抑止し、Happened-Before に処理することを強制する。
+次に、synchronized ブロックの外と中で二重に null チェックをすることで、不必要にロックを取らないようにすることと、ロック取得後に他のスレッドが初期化を終えた場合のレースコンディションの回避が行われる。
+これを Double Checked Locking という。
+
+ただし、このイディオムは `volatile` 修飾子が保証する動作が Java 1.4以前と 1.5 以降で異なり、このイディオムが正しく動作するのは 1.5 以降の `volatile` 修飾子の保証する動作である点に注意。  
+Android であれば、4.0 以降の DalvikVM ならば問題なく動作するものの、2.2 以前では正しく動作する保証がない。
 
 ## 例外
 
