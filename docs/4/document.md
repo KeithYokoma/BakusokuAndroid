@@ -59,6 +59,7 @@ dependencies {
     testCompile 'junit:junit:4.11' // JUnit 4
     testCompile 'org.robolectric:robolectric:2.3-SNAPSHOT'
     testCompile 'com.squareup:fest-android:1.0.+' // FEST(Fixtures for Easy Software Testing) を Android で利用するためのライブラリ
+    // testCompile では AndroidStudio で入力補完がされないため、依存解決のために provided を指定
     provided 'junit:junit:4.11'
     provided 'org.robolectric:robolectric:2.3-SNAPSHOT'
     provided 'com.squareup:fest-android:1.0.+'
